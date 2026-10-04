@@ -6,13 +6,19 @@ from interview_scheduler.models import (
 )
 from interview_scheduler.solver import InterviewScheduler
 from interview_scheduler.validate import validate_schedule
-
+from datetime import datetime
 
 @pytest.fixture
 def config():
     return SchedulerConfig(
         n_interviewees=1,
-        horizon=200,
+        start_time=datetime(
+        2026, 10, 10, 9, 0
+        ),
+
+        end_time=datetime(
+            2026, 10, 10, 12, 20
+        ),
         break_time=5,
         travel_time=10,
         interview_types={
@@ -127,7 +133,13 @@ def test_solver_schedule_contains_all_interviews(config):
 def test_solver_respects_room_capacity():
     config = SchedulerConfig(
         n_interviewees=4,
-        horizon=300,
+        start_time=datetime(
+        2026, 10, 10, 8, 0
+        ),
+
+        end_time=datetime(
+            2026, 10, 10, 13, 0
+        ),
         break_time=5,
         travel_time=10,
         interview_types={
@@ -254,7 +266,13 @@ def test_ready_occupancy_changes_room_usage():
 
     config = SchedulerConfig(
         n_interviewees=2,
-        horizon=100,
+        start_time=datetime(
+        2026, 10, 10, 11, 0
+        ),
+
+        end_time=datetime(
+            2026, 10, 10, 12, 40
+        ),
         break_time=5,
         travel_time=0,
         interview_types={
@@ -304,7 +322,13 @@ def test_ready_occupancy_changes_room_usage():
 def test_solver_returns_infeasible_for_too_small_horizon():
     config = SchedulerConfig(
         n_interviewees=1,
-        horizon=120,
+        start_time=datetime(
+        2026, 10, 10, 10, 0
+        ),
+
+        end_time=datetime(
+            2026, 10, 10, 12, 0
+        ),
         break_time=5,
         travel_time=10,
         interview_types={
@@ -346,7 +370,13 @@ def test_solver_returns_infeasible_for_too_small_horizon():
 def test_room_count_two_allows_parallel_execution():
     config = SchedulerConfig(
         n_interviewees=2,
-        horizon=100,
+        start_time=datetime(
+        2026, 10, 10, 10, 0
+        ),
+
+        end_time=datetime(
+            2026, 10, 10, 11, 40
+        ),
         break_time=5,
         travel_time=0,
         interview_types={
@@ -387,7 +417,13 @@ def test_room_count_two_allows_parallel_execution():
 def test_room_count_two_never_exceeds_capacity():
     config = SchedulerConfig(
         n_interviewees=5,
-        horizon=150,
+        start_time=datetime(
+        2026, 10, 10, 10, 0
+        ),
+
+        end_time=datetime(
+            2026, 10, 10, 12, 30
+        ),
         break_time=5,
         travel_time=0,
         interview_types={
@@ -446,7 +482,13 @@ def test_increasing_room_count_enables_parallel_execution():
 
     config_one_room = SchedulerConfig(
         n_interviewees=2,
-        horizon=100,
+        start_time=datetime(
+            2026, 10, 10, 10, 0
+        ),
+
+        end_time=datetime(
+            2026, 10, 10, 11, 40
+        ),
         break_time=5,
         travel_time=0,
         interview_types={
@@ -459,7 +501,13 @@ def test_increasing_room_count_enables_parallel_execution():
 
     config_two_rooms = SchedulerConfig(
         n_interviewees=2,
-        horizon=100,
+        start_time=datetime(
+        2026, 10, 10, 10, 0
+        ),
+
+        end_time=datetime(
+            2026, 10, 10, 11, 40
+        ),
         break_time=5,
         travel_time=0,
         interview_types={
@@ -517,3 +565,36 @@ def test_increasing_room_count_enables_parallel_execution():
         for room in result_two_rooms.rooms
     }) == 2
 
+
+def test_config_horizon_is_calculated_from_time_range():
+    config = SchedulerConfig(
+        n_interviewees=1,
+        start_time=datetime(
+            2026, 10, 10, 9, 0
+        ),
+        end_time=datetime(
+            2026, 10, 10, 13, 0
+        ),
+        break_time=5,
+        travel_time=5,
+        interview_types={},
+    )
+
+    assert config.horizon == 240
+
+def test_config_rejects_invalid_time_range():
+    config = SchedulerConfig(
+        n_interviewees=1,
+        start_time=datetime(
+            2026, 10, 10, 13, 0
+        ),
+        end_time=datetime(
+            2026, 10, 10, 9, 0
+        ),
+        break_time=5,
+        travel_time=5,
+        interview_types={},
+    )
+
+    with pytest.raises(ValueError):
+        _ = config.horizon

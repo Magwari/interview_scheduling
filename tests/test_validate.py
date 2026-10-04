@@ -12,13 +12,18 @@ from interview_scheduler.validate import (
     ScheduleValidationError,
     validate_schedule,
 )
-
+from datetime import datetime
 
 @pytest.fixture
 def config():
     return SchedulerConfig(
         n_interviewees=1,
-        horizon=200,
+        start_time=datetime(
+            2026, 10, 10, 9, 0
+        ),
+        end_time=datetime(
+            2026, 10, 10, 12, 20
+        ),
         break_time=5,
         travel_time=10,
         interview_types={

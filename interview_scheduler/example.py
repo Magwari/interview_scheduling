@@ -1,3 +1,5 @@
+from datetime import datetime
+
 from .models import (
     InterviewType,
     SchedulerConfig,
@@ -11,7 +13,13 @@ def main():
 
     config = SchedulerConfig(
         n_interviewees=60,
-        horizon=240,
+        start_time=datetime(
+            2026, 10, 10, 8, 30
+        ),
+
+        end_time=datetime(
+            2026, 10, 10, 12, 30
+        ),
 
         break_time=5,
         travel_time=5,

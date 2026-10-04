@@ -1,5 +1,7 @@
+from datetime import timedelta
 from pathlib import Path
 
+import matplotlib.dates as mdates
 import matplotlib.pyplot as plt
 from matplotlib.patches import Patch
 
@@ -13,18 +15,15 @@ def plot_gantt(
     show: bool = True,
 ) -> None:
     """
-    ScheduleResult를 interviewee / room 기준 Gantt chart로 출력한다.
+    ScheduleResult를 Interviewee / Room 기준 Gantt chart로 출력한다.
 
-    위쪽:
-        Interviewee별 일정
-
-    아래쪽:
-        Room별 일정
+    시간은 SchedulerConfig.start_time을 기준으로
+    ScheduleResult 내부의 minute offset을 실제 datetime으로 변환한다.
 
     Parameters
     ----------
     result:
-        Scheduler.solve()의 결과
+        InterviewScheduler.solve()의 결과
 
     config:
         SchedulerConfig
@@ -38,15 +37,45 @@ def plot_gantt(
     """
 
     if not result.persons:
-        raise ValueError("ScheduleResult contains no person schedules.")
+        raise ValueError(
+            "ScheduleResult contains no person schedules."
+        )
 
     if not result.rooms:
-        raise ValueError("ScheduleResult contains no room schedules.")
+        raise ValueError(
+            "ScheduleResult contains no room schedules."
+        )
+
+    # ---------------------------------------------------------
+    # Person 정렬
+    #
+    # 실제 첫 시작 시간이 빠른 사람부터 표시한다.
+    # 동일한 시간이라면 interviewee 번호를 기준으로 정렬한다.
+    # ---------------------------------------------------------
+    persons = sorted(
+        result.persons,
+        key=lambda person: (
+            person.first_start,
+            person.interviewee,
+        ),
+    )
+
+    # ---------------------------------------------------------
+    # Room 정렬
+    # ---------------------------------------------------------
+    rooms = sorted(
+        result.rooms,
+        key=lambda room: (
+            room.room,
+            room.room_start,
+            room.interviewee,
+        ),
+    )
 
     fig, (ax_person, ax_room) = plt.subplots(
         2,
         1,
-        figsize=(14, 8),
+        figsize=(16, 10),
         gridspec_kw={
             "height_ratios": [2, 1],
         },
@@ -54,13 +83,13 @@ def plot_gantt(
 
     _plot_person_gantt(
         ax_person,
-        result,
+        persons,
         config,
     )
 
     _plot_room_gantt(
         ax_room,
-        result,
+        rooms,
         config,
     )
 
@@ -68,10 +97,12 @@ def plot_gantt(
 
     if output_path is not None:
         output_path = Path(output_path)
+
         output_path.parent.mkdir(
             parents=True,
             exist_ok=True,
         )
+
         fig.savefig(
             output_path,
             dpi=150,
@@ -86,15 +117,25 @@ def plot_gantt(
 
 def _plot_person_gantt(
     ax,
-    result: ScheduleResult,
+    persons,
     config: SchedulerConfig,
 ) -> None:
+    """
+    Interviewee 기준 Gantt chart.
+
+    X축:
+        실제 datetime
+
+    Y축:
+        first_start가 빠른 Interviewee 순
+    """
+
     y_positions = {
         person.interviewee: index
-        for index, person in enumerate(result.persons)
+        for index, person in enumerate(persons)
     }
 
-    for person in result.persons:
+    for person in persons:
         y = y_positions[person.interviewee]
 
         for interview in person.interviews:
@@ -102,28 +143,65 @@ def _plot_person_gantt(
                 interview.interview_type
             ]
 
-            # Ready 구간
-            if interview_type.ready > 0:
+            # -------------------------------------------------
+            # 실제 datetime 계산
+            # -------------------------------------------------
+
+            ready_start = (
+                config.start_time
+                + timedelta(
+                    minutes=interview.ready_start
+                )
+            )
+
+            interview_start = (
+                config.start_time
+                + timedelta(
+                    minutes=interview.start
+                )
+            )
+
+            interview_end = (
+                config.start_time
+                + timedelta(
+                    minutes=interview.end
+                )
+            )
+
+            # -------------------------------------------------
+            # Ready
+            # -------------------------------------------------
+
+            if ready_start < interview_start:
                 ax.barh(
                     y,
-                    interview_type.ready,
-                    left=interview.ready_start,
+                    interview_start - ready_start,
+                    left=ready_start,
                     height=0.55,
                     alpha=0.3,
                 )
 
-            # 실제 Interview 구간
+            # -------------------------------------------------
+            # Interview
+            # -------------------------------------------------
+
             ax.barh(
                 y,
-                interview_type.duration,
-                left=interview.start,
+                interview_end - interview_start,
+                left=interview_start,
                 height=0.55,
             )
 
-            # 실제 면접 구간 중앙에 Type 표시
+            # -------------------------------------------------
+            # Interview Type 표시
+            # -------------------------------------------------
+
             center = (
-                interview.start
-                + interview_type.duration / 2
+                interview_start
+                + (
+                    interview_end
+                    - interview_start
+                ) / 2
             )
 
             ax.text(
@@ -134,13 +212,28 @@ def _plot_person_gantt(
                 va="center",
             )
 
+        # -----------------------------------------------------
+        # Person 번호
+        # -----------------------------------------------------
+
+        person_start = (
+            config.start_time
+            + timedelta(
+                minutes=person.first_start
+            )
+        )
+
         ax.text(
-            person.first_start - 1,
+            person_start,
             y,
             f"P{person.interviewee}",
             ha="right",
             va="center",
         )
+
+    # ---------------------------------------------------------
+    # Y축
+    # ---------------------------------------------------------
 
     ax.set_yticks(
         list(y_positions.values())
@@ -149,14 +242,27 @@ def _plot_person_gantt(
     ax.set_yticklabels(
         [
             f"Interviewee {person.interviewee}"
-            for person in result.persons
+            for person in persons
         ]
     )
 
+    # ---------------------------------------------------------
+    # X축 범위
+    # ---------------------------------------------------------
+
+    start_time = config.start_time
+    end_time = config.end_time
+
     ax.set_xlim(
-        0,
-        config.horizon,
+        start_time,
+        end_time,
     )
+
+    # ---------------------------------------------------------
+    # X축: 10분 단위
+    # ---------------------------------------------------------
+
+    _configure_time_axis(ax)
 
     ax.set_ylabel("Interviewee")
     ax.set_title("Interview Schedule")
@@ -182,12 +288,22 @@ def _plot_person_gantt(
 
 def _plot_room_gantt(
     ax,
-    result: ScheduleResult,
+    rooms,
     config: SchedulerConfig,
 ) -> None:
+    """
+    Room 기준 Gantt chart.
+
+    X축:
+        실제 datetime
+
+    Y축:
+        Room
+    """
+
     room_names = sorted({
         room.room
-        for room in result.rooms
+        for room in rooms
     })
 
     y_positions = {
@@ -195,43 +311,91 @@ def _plot_room_gantt(
         for index, room_name in enumerate(room_names)
     }
 
-    for room in result.rooms:
+    for room in rooms:
         y = y_positions[room.room]
 
-        interview_type = config.interview_types[
-            room.interview_type
-        ]
+        # -----------------------------------------------------
+        # 실제 datetime 계산
+        # -----------------------------------------------------
 
-        # Room occupancy 전체
-        room_duration = (
-            room.room_end
-            - room.room_start
+        room_start = (
+            config.start_time
+            + timedelta(
+                minutes=room.room_start
+            )
         )
+
+        interview_start = (
+            config.start_time
+            + timedelta(
+                minutes=room.interview_start
+            )
+        )
+
+        interview_end = (
+            config.start_time
+            + timedelta(
+                minutes=room.interview_end
+            )
+        )
+
+        room_end = (
+            config.start_time
+            + timedelta(
+                minutes=room.room_end
+            )
+        )
+
+        # -----------------------------------------------------
+        # Ready / Preparation
+        # -----------------------------------------------------
+
+        if room_start < interview_start:
+            ax.barh(
+                y,
+                interview_start - room_start,
+                left=room_start,
+                height=0.55,
+                alpha=0.3,
+            )
+
+        # -----------------------------------------------------
+        # 실제 Interview
+        # -----------------------------------------------------
 
         ax.barh(
             y,
-            room_duration,
-            left=room.room_start,
-            height=0.55,
-            alpha=0.35,
-        )
-
-        # 실제 interview 구간
-        interview_duration = (
-            room.interview_end
-            - room.interview_start
-        )
-
-        ax.barh(
-            y,
-            interview_duration,
-            left=room.interview_start,
+            interview_end - interview_start,
+            left=interview_start,
             height=0.55,
         )
+
+        # -----------------------------------------------------
+        # Break / Cooldown
+        #
+        # 현재 RoomSchedule의 room_end는
+        # interview_end + break_time을 의미한다.
+        # -----------------------------------------------------
+
+        if interview_end < room_end:
+            ax.barh(
+                y,
+                room_end - interview_end,
+                left=interview_end,
+                height=0.55,
+                alpha=0.15,
+            )
+
+        # -----------------------------------------------------
+        # Interview Type / Person
+        # -----------------------------------------------------
 
         center = (
-            room.interview_start
-            + interview_duration / 2
+            interview_start
+            + (
+                interview_end
+                - interview_start
+            ) / 2
         )
 
         ax.text(
@@ -245,6 +409,10 @@ def _plot_room_gantt(
             va="center",
         )
 
+    # ---------------------------------------------------------
+    # Y축
+    # ---------------------------------------------------------
+
     ax.set_yticks(
         list(y_positions.values())
     )
@@ -253,10 +421,28 @@ def _plot_room_gantt(
         room_names
     )
 
-    ax.set_xlim(
-        0,
-        config.horizon + config.break_time,
+    # ---------------------------------------------------------
+    # X축
+    # ---------------------------------------------------------
+
+    start_time = config.start_time
+
+    # 현재 solver에서는 room_end가
+    # horizon + break_time까지 갈 수 있으므로
+    # Gantt에도 이를 반영한다.
+    end_time = (
+        config.end_time
+        + timedelta(
+            minutes=config.break_time
+        )
     )
+
+    ax.set_xlim(
+        start_time,
+        end_time,
+    )
+
+    _configure_time_axis(ax)
 
     ax.set_xlabel("Time")
     ax.set_ylabel("Room")
@@ -270,12 +456,41 @@ def _plot_room_gantt(
     ax.legend(
         handles=[
             Patch(
-                alpha=0.35,
-                label="Room Occupancy",
+                alpha=0.3,
+                label="Ready / Preparation",
             ),
             Patch(
                 label="Interview",
             ),
+            Patch(
+                alpha=0.15,
+                label="Break",
+            ),
         ],
         loc="upper right",
+    )
+
+
+def _configure_time_axis(
+    ax,
+) -> None:
+    """
+    X축을 실제 datetime 기준 10분 단위로 설정한다.
+    """
+
+    ax.xaxis.set_major_locator(
+        mdates.MinuteLocator(
+            interval=10,
+        )
+    )
+
+    ax.xaxis.set_major_formatter(
+        mdates.DateFormatter(
+            "%H:%M",
+        )
+    )
+
+    ax.tick_params(
+        axis="x",
+        rotation=45,
     )

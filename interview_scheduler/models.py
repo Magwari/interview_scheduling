@@ -1,5 +1,6 @@
 from dataclasses import dataclass
 from typing import Dict, List
+from datetime import datetime, timedelta
 
 
 @dataclass(frozen=True)
@@ -14,12 +15,36 @@ class InterviewType:
 @dataclass(frozen=True)
 class SchedulerConfig:
     n_interviewees: int
-    horizon: int
+
+    start_time: datetime
+    end_time: datetime
+
     break_time: int
     travel_time: int
+
     interview_types: Dict[str, InterviewType]
 
+    @property
+    def horizon(self) -> int:
+        delta = self.end_time - self.start_time
 
+        if delta.total_seconds() <= 0:
+            raise ValueError(
+                "end_time must be later than start_time"
+            )
+
+        if delta.total_seconds() % 60 != 0:
+            raise ValueError(
+                "start_time and end_time must differ "
+                "by a whole number of minutes"
+            )
+
+        return int(
+            delta.total_seconds() // 60
+        )
+
+
+@dataclass
 @dataclass
 class InterviewSchedule:
     interviewee: int
@@ -30,6 +55,30 @@ class InterviewSchedule:
     end: int
 
     room: str | None = None
+
+    def ready_start_at(
+        self,
+        schedule_start: datetime,
+    ) -> datetime:
+        return schedule_start + timedelta(
+            minutes=self.ready_start
+        )
+
+    def start_at(
+        self,
+        schedule_start: datetime,
+    ) -> datetime:
+        return schedule_start + timedelta(
+            minutes=self.start
+        )
+
+    def end_at(
+        self,
+        schedule_start: datetime,
+    ) -> datetime:
+        return schedule_start + timedelta(
+            minutes=self.end
+        )
 
 
 @dataclass
