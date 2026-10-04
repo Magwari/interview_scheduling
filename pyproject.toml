@@ -1,0 +1,50 @@
+[build-system]
+requires = ["setuptools>=68", "wheel"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "interview-scheduler"
+version = "0.1.0"
+description = "OR-Tools based interview scheduling package."
+readme = "README.md"
+requires-python = ">=3.10"
+license = { text = "MIT" }
+authors = [
+    { name = "mjs12" },
+]
+keywords = [
+    "scheduling",
+    "interview",
+    "ortools",
+    "constraint-programming",
+    "gantt",
+]
+classifiers = [
+    "Programming Language :: Python :: 3",
+    "Programming Language :: Python :: 3.10",
+    "Programming Language :: Python :: 3.11",
+    "Programming Language :: Python :: 3.12",
+    "Topic :: Scientific/Engineering",
+]
+dependencies = [
+    "ortools>=9.0",
+    "matplotlib>=3.5",
+]
+
+[project.optional-dependencies]
+dev = [
+    "pytest>=7.0",
+]
+
+[project.scripts]
+interview-scheduler = "interview_scheduler.example:main"
+
+[project.urls]
+Homepage = "https://github.com/mjs12/interview_scheduling"
+
+[tool.setuptools.packages.find]
+include = ["interview_scheduler*"]
+exclude = ["tests*"]
+
+[tool.pytest.ini_options]
+testpaths = ["tests"]

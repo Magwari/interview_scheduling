@@ -1,0 +1,6 @@
+# Runtime dependencies
+ortools>=9.0
+matplotlib>=3.5
+
+# Development / testing
+pytest>=7.0

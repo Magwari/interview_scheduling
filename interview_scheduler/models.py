@@ -45,7 +45,6 @@ class SchedulerConfig:
 
 
 @dataclass
-@dataclass
 class InterviewSchedule:
     interviewee: int
     interview_type: str

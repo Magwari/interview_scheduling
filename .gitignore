@@ -1,4 +1,11 @@
 **/__pycache__
+**/*.py[cod]
 .pytest_cache
 venv
 output
+
+# Build / packaging artifacts
+build/
+dist/
+*.egg-info/
+*.egg

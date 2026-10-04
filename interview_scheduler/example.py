@@ -7,9 +7,10 @@ from .models import (
 from .solver import InterviewScheduler
 from .validate import validate_schedule
 from .gantt import plot_gantt
-from .solver import InterviewScheduler
+from .export import save_json
 
-def main():
+
+def main() -> None:
 
     config = SchedulerConfig(
         n_interviewees=60,
@@ -111,6 +112,12 @@ def main():
     result = scheduler.solve()
 
     if result.status in ("OPTIMAL", "FEASIBLE"):
+        save_json(
+            result,
+            config,
+            output_path="output/interview_schedule.json",
+        )
+
         plot_gantt(
             result,
             config,
