@@ -323,6 +323,161 @@ def test_insufficient_break_and_travel(config):
         validate_schedule(result, config)
 
 
+def make_per_type_break_config():
+    # A.break_time=15, B.break_time=5, travel_time=5.
+    # A.end=35이면 B.ready_start는
+    # 35 + 15(A의 break) + 5(travel) = 55 이상이어야 한다.
+    return SchedulerConfig(
+        n_interviewees=1,
+        start_time=datetime(
+            2026, 10, 10, 9, 0
+        ),
+        end_time=datetime(
+            2026, 10, 10, 13, 0
+        ),
+        travel_time=5,
+        interview_types={
+            "A": InterviewType(
+                duration=30,
+                ready=5,
+                room_count=1,
+                break_time=15,
+                ready_occupies_room=True,
+            ),
+            "B": InterviewType(
+                duration=20,
+                ready=5,
+                room_count=1,
+                break_time=5,
+                ready_occupies_room=False,
+            ),
+        },
+    )
+
+
+def test_gap_between_types_uses_previous_type_break():
+    config = make_per_type_break_config()
+
+    # B.ready_start=54는
+    # (잘못된) B.break_time=5 기준으로는 충분(35+5+5=45)하지만
+    # 올바른 A.break_time=15 기준으로는 부족하다(35+15+5=55).
+    result = ScheduleResult(
+        status="FEASIBLE",
+        objective=79,
+        persons=[
+            PersonSchedule(
+                interviewee=0,
+                interviews=[
+                    InterviewSchedule(
+                        interviewee=0,
+                        interview_type="A",
+                        ready_start=0,
+                        start=5,
+                        end=35,
+                        room="A-1",
+                    ),
+                    InterviewSchedule(
+                        interviewee=0,
+                        interview_type="B",
+                        ready_start=54,
+                        start=59,
+                        end=79,
+                        room="B-1",
+                    ),
+                ],
+                first_start=0,
+                last_end=79,
+                stay=79,
+            ),
+        ],
+        rooms=[
+            RoomSchedule(
+                room="A-1",
+                interview_type="A",
+                interviewee=0,
+                room_start=0,
+                interview_start=5,
+                interview_end=35,
+                room_end=50,
+            ),
+            RoomSchedule(
+                room="B-1",
+                interview_type="B",
+                interviewee=0,
+                room_start=59,
+                interview_start=59,
+                interview_end=79,
+                room_end=84,
+            ),
+        ],
+    )
+
+    with pytest.raises(
+        ScheduleValidationError,
+        match="insufficient gap",
+    ):
+        validate_schedule(result, config)
+
+
+def test_gap_between_types_satisfied_with_previous_type_break():
+    config = make_per_type_break_config()
+
+    # B.ready_start=55는 A.break_time=15 + travel_time=5를
+    # 정확히 만족한다.
+    result = ScheduleResult(
+        status="FEASIBLE",
+        objective=80,
+        persons=[
+            PersonSchedule(
+                interviewee=0,
+                interviews=[
+                    InterviewSchedule(
+                        interviewee=0,
+                        interview_type="A",
+                        ready_start=0,
+                        start=5,
+                        end=35,
+                        room="A-1",
+                    ),
+                    InterviewSchedule(
+                        interviewee=0,
+                        interview_type="B",
+                        ready_start=55,
+                        start=60,
+                        end=80,
+                        room="B-1",
+                    ),
+                ],
+                first_start=0,
+                last_end=80,
+                stay=80,
+            ),
+        ],
+        rooms=[
+            RoomSchedule(
+                room="A-1",
+                interview_type="A",
+                interviewee=0,
+                room_start=0,
+                interview_start=5,
+                interview_end=35,
+                room_end=50,
+            ),
+            RoomSchedule(
+                room="B-1",
+                interview_type="B",
+                interviewee=0,
+                room_start=60,
+                interview_start=60,
+                interview_end=80,
+                room_end=85,
+            ),
+        ],
+    )
+
+    validate_schedule(result, config)
+
+
 def test_interviews_overlap(config):
     result = make_valid_result()
 

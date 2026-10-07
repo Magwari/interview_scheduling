@@ -588,3 +588,53 @@ def test_config_rejects_invalid_time_range():
 
     with pytest.raises(ValueError):
         _ = config.horizon
+
+
+def test_per_type_break_time_is_respected():
+    # A와 B의 break_time이 서로 다른 경우,
+    # 각 room의 cooldown이 해당 타입의 break_time이
+    # 반영되어야 한다.
+    config = SchedulerConfig(
+        n_interviewees=1,
+        start_time=datetime(
+            2026, 10, 10, 9, 0
+        ),
+        end_time=datetime(
+            2026, 10, 10, 13, 0
+        ),
+        travel_time=0,
+        interview_types={
+            "A": InterviewType(
+                duration=30,
+                ready=0,
+                room_count=1,
+                break_time=5,
+                ready_occupies_room=False,
+            ),
+            "B": InterviewType(
+                duration=20,
+                ready=0,
+                room_count=1,
+                break_time=15,
+                ready_occupies_room=False,
+            ),
+        },
+    )
+
+    scheduler = InterviewScheduler(config)
+    result = scheduler.solve()
+
+    assert result.status in ("OPTIMAL", "FEASIBLE")
+
+    validate_schedule(result, config)
+
+    for room in result.rooms:
+        expected_break = config.interview_types[
+            room.interview_type
+        ].break_time
+
+        assert (
+            room.room_end
+            - room.interview_end
+            == expected_break
+        )
