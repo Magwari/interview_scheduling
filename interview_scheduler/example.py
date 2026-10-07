@@ -22,29 +22,28 @@ def main() -> None:
             2026, 10, 10, 12, 30
         ),
 
-        break_time=5,
         travel_time=5,
 
         interview_types={
-            "A": InterviewType(
-                name="A",
-                duration=25,
+            "면접 A": InterviewType(
+                duration=30,
                 ready=0,
-                room_count=8,
+                room_count=9,
+                break_time=5,
                 ready_occupies_room=True,
             ),
-            "B": InterviewType(
-                name="B",
+            "면접 B": InterviewType(
                 duration=10,
                 ready=20,
                 room_count=6,
+                break_time=0,
                 ready_occupies_room=False,
             ),
-            "C": InterviewType(
-                name="C",
+            "면접 C": InterviewType(
                 duration=15,
                 ready=0,
                 room_count=5,
+                break_time=5,
                 ready_occupies_room=True,
             ),
         },

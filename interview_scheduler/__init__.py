@@ -18,14 +18,13 @@ OR-Tools 기반 면접 스케줄링 패키지.
         n_interviewees=2,
         start_time=datetime(2026, 10, 10, 9, 0),
         end_time=datetime(2026, 10, 10, 12, 0),
-        break_time=5,
         travel_time=5,
         interview_types={
             "A": InterviewType(
-                name="A",
                 duration=30,
                 ready=5,
                 room_count=1,
+                break_time=5,
             ),
         },
     )
