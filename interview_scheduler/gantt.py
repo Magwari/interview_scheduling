@@ -430,10 +430,19 @@ def _plot_room_gantt(
     # 현재 solver에서는 room_end가
     # horizon + break_time까지 갈 수 있으므로
     # Gantt에도 이를 반영한다.
+    # break_time은 면접 타입별 값이므로 최대값을 사용한다.
+    max_break_time = max(
+        (
+            interview_type.break_time
+            for interview_type in config.interview_types.values()
+        ),
+        default=0,
+    )
+
     end_time = (
         config.end_time
         + timedelta(
-            minutes=config.break_time
+            minutes=max_break_time
         )
     )
 

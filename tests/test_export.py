@@ -21,14 +21,13 @@ def config():
         n_interviewees=2,
         start_time=datetime(2026, 10, 10, 9, 0),
         end_time=datetime(2026, 10, 10, 12, 0),
-        break_time=5,
         travel_time=5,
         interview_types={
             "A": InterviewType(
-                name="A", duration=30, ready=5, room_count=1
+                duration=30, ready=5, room_count=1, break_time=5
             ),
             "B": InterviewType(
-                name="B", duration=20, ready=5, room_count=2
+                duration=20, ready=5, room_count=2, break_time=5
             ),
         },
     )
@@ -145,7 +144,7 @@ class TestResultToDict:
         assert meta["n_interviewees"] == 2
         assert meta["start_time"] == "2026-10-10T09:00:00"
         assert meta["end_time"] == "2026-10-10T12:00:00"
-        assert meta["break_time"] == 5
+        assert "break_time" not in meta
         assert meta["travel_time"] == 5
         assert "version" in meta
         assert "solved_at" in meta
@@ -158,6 +157,7 @@ class TestResultToDict:
         assert types["A"]["duration"] == 30
         assert types["A"]["ready"] == 5
         assert types["A"]["room_count"] == 1
+        assert types["A"]["break_time"] == 5
         assert types["B"]["ready_occupies_room"] is False
 
     def test_status_and_objective(self, result, config):

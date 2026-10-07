@@ -62,14 +62,13 @@ def _config_to_dict(config: SchedulerConfig) -> dict[str, Any]:
         "n_interviewees": config.n_interviewees,
         "start_time": _datetime_to_iso(config.start_time),
         "end_time": _datetime_to_iso(config.end_time),
-        "break_time": config.break_time,
         "travel_time": config.travel_time,
         "interview_types": {
             name: {
-                "name": it.name,
                 "duration": it.duration,
                 "ready": it.ready,
                 "room_count": it.room_count,
+                "break_time": it.break_time,
                 "ready_occupies_room": it.ready_occupies_room,
             }
             for name, it in config.interview_types.items()
