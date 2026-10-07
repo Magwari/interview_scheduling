@@ -24,28 +24,27 @@ def config():
         end_time=datetime(
             2026, 10, 10, 12, 20
         ),
-        break_time=5,
         travel_time=10,
         interview_types={
             "A": InterviewType(
-                name="A",
                 duration=30,
                 ready=5,
                 room_count=1,
+                break_time=5,
                 ready_occupies_room=True,
             ),
             "B": InterviewType(
-                name="B",
                 duration=20,
                 ready=5,
                 room_count=1,
+                break_time=5,
                 ready_occupies_room=False,
             ),
             "C": InterviewType(
-                name="C",
                 duration=40,
                 ready=10,
                 room_count=1,
+                break_time=5,
                 ready_occupies_room=True,
             ),
         },

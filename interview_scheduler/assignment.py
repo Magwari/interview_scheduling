@@ -46,7 +46,7 @@ def assign_rooms(
 
             room_end = (
                 interview.end
-                + config.break_time
+                + interview_type.break_time
             )
 
             assigned_room = None

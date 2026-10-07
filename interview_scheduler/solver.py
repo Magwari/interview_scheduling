@@ -60,7 +60,7 @@ class InterviewScheduler:
 
                 ready = interview_type.ready
                 duration = interview_type.duration
-                break_time = self.config.break_time
+                break_time = interview_type.break_time
 
                 # --------------------------------------------------
                 # Ready start
@@ -206,6 +206,14 @@ class InterviewScheduler:
                         f"{i}_{type_a}_before_{type_b}"
                     )
 
+                    # break는 끝난(이전) 면접 타입에 속한다.
+                    break_a = (
+                        self.config.interview_types[type_a].break_time
+                    )
+                    break_b = (
+                        self.config.interview_types[type_b].break_time
+                    )
+
                     # --------------------------------------------------
                     # A -> B
                     #
@@ -222,7 +230,7 @@ class InterviewScheduler:
                         self.ready_start[i, type_b]
                         >=
                         self.end[i, type_a]
-                        + self.config.break_time
+                        + break_a
                         + self.config.travel_time
                     ).only_enforce_if(a_before_b)
 
@@ -234,7 +242,7 @@ class InterviewScheduler:
                         self.ready_start[i, type_a]
                         >=
                         self.end[i, type_b]
-                        + self.config.break_time
+                        + break_b
                         + self.config.travel_time
                     ).only_enforce_if(
                         a_before_b.Not()

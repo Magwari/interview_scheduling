@@ -19,28 +19,27 @@ def config():
         end_time=datetime(
             2026, 10, 10, 12, 20
         ),
-        break_time=5,
         travel_time=10,
         interview_types={
             "A": InterviewType(
-                name="A",
                 duration=30,
                 ready=5,
                 room_count=1,
+                break_time=5,
                 ready_occupies_room=True,
             ),
             "B": InterviewType(
-                name="B",
                 duration=20,
                 ready=5,
                 room_count=1,
+                break_time=5,
                 ready_occupies_room=False,
             ),
             "C": InterviewType(
-                name="C",
                 duration=40,
                 ready=10,
                 room_count=1,
+                break_time=5,
                 ready_occupies_room=True,
             ),
         },
@@ -140,28 +139,27 @@ def test_solver_respects_room_capacity():
         end_time=datetime(
             2026, 10, 10, 13, 0
         ),
-        break_time=5,
         travel_time=10,
         interview_types={
             "A": InterviewType(
-                name="A",
                 duration=30,
                 ready=5,
                 room_count=1,
+                break_time=5,
                 ready_occupies_room=True,
             ),
             "B": InterviewType(
-                name="B",
                 duration=20,
                 ready=5,
                 room_count=1,
+                break_time=5,
                 ready_occupies_room=False,
             ),
             "C": InterviewType(
-                name="C",
                 duration=40,
                 ready=10,
                 room_count=1,
+                break_time=5,
                 ready_occupies_room=True,
             ),
         },
@@ -273,14 +271,13 @@ def test_ready_occupancy_changes_room_usage():
         end_time=datetime(
             2026, 10, 10, 12, 40
         ),
-        break_time=5,
         travel_time=0,
         interview_types={
             "A": InterviewType(
-                name="A",
                 duration=20,
                 ready=10,
                 room_count=1,
+                break_time=5,
                 ready_occupies_room=True,
             ),
         },
@@ -329,28 +326,27 @@ def test_solver_returns_infeasible_for_too_small_horizon():
         end_time=datetime(
             2026, 10, 10, 12, 0
         ),
-        break_time=5,
         travel_time=10,
         interview_types={
             "A": InterviewType(
-                name="A",
                 duration=30,
                 ready=5,
                 room_count=1,
+                break_time=5,
                 ready_occupies_room=True,
             ),
             "B": InterviewType(
-                name="B",
                 duration=20,
                 ready=5,
                 room_count=1,
+                break_time=5,
                 ready_occupies_room=False,
             ),
             "C": InterviewType(
-                name="C",
                 duration=40,
                 ready=10,
                 room_count=1,
+                break_time=5,
                 ready_occupies_room=True,
             ),
         },
@@ -377,14 +373,13 @@ def test_room_count_two_allows_parallel_execution():
         end_time=datetime(
             2026, 10, 10, 11, 40
         ),
-        break_time=5,
         travel_time=0,
         interview_types={
             "A": InterviewType(
-                name="A",
                 duration=20,
                 ready=10,
                 room_count=2,
+                break_time=5,
                 ready_occupies_room=True,
             ),
         },
@@ -424,14 +419,13 @@ def test_room_count_two_never_exceeds_capacity():
         end_time=datetime(
             2026, 10, 10, 12, 30
         ),
-        break_time=5,
         travel_time=0,
         interview_types={
             "A": InterviewType(
-                name="A",
                 duration=20,
                 ready=10,
                 room_count=2,
+                break_time=5,
                 ready_occupies_room=True,
             ),
         },
@@ -474,9 +468,9 @@ def test_room_count_two_never_exceeds_capacity():
 
 def test_increasing_room_count_enables_parallel_execution():
     base_interview_type = dict(
-        name="A",
         duration=20,
         ready=10,
+        break_time=5,
         ready_occupies_room=True,
     )
 
@@ -489,7 +483,6 @@ def test_increasing_room_count_enables_parallel_execution():
         end_time=datetime(
             2026, 10, 10, 11, 40
         ),
-        break_time=5,
         travel_time=0,
         interview_types={
             "A": InterviewType(
@@ -508,7 +501,6 @@ def test_increasing_room_count_enables_parallel_execution():
         end_time=datetime(
             2026, 10, 10, 11, 40
         ),
-        break_time=5,
         travel_time=0,
         interview_types={
             "A": InterviewType(
@@ -575,7 +567,6 @@ def test_config_horizon_is_calculated_from_time_range():
         end_time=datetime(
             2026, 10, 10, 13, 0
         ),
-        break_time=5,
         travel_time=5,
         interview_types={},
     )
@@ -591,7 +582,6 @@ def test_config_rejects_invalid_time_range():
         end_time=datetime(
             2026, 10, 10, 9, 0
         ),
-        break_time=5,
         travel_time=5,
         interview_types={},
     )

@@ -175,11 +175,6 @@ def _validate_person_order(
     config: SchedulerConfig,
 ) -> None:
 
-    required_gap = (
-        config.break_time
-        + config.travel_time
-    )
-
     for person in result.persons:
 
         interviews = sorted(
@@ -192,9 +187,15 @@ def _validate_person_order(
             interviews[1:],
         ):
 
+            # break는 끝난(이전) 면접 타입에 속한다.
+            previous_type = config.interview_types[
+                previous.interview_type
+            ]
+
             required_start = (
                 previous.end
-                + required_gap
+                + previous_type.break_time
+                + config.travel_time
             )
 
             if current.ready_start < required_start:
@@ -279,7 +280,7 @@ def _validate_rooms(
 
         expected_room_end = (
             room.interview_end
-            + config.break_time
+            + interview_type.break_time
         )
 
         if room.room_end != expected_room_end:

@@ -5,10 +5,10 @@ from datetime import datetime, timedelta
 
 @dataclass(frozen=True)
 class InterviewType:
-    name: str
     duration: int
     ready: int
     room_count: int
+    break_time: int
     ready_occupies_room: bool = False
 
 
@@ -19,7 +19,6 @@ class SchedulerConfig:
     start_time: datetime
     end_time: datetime
 
-    break_time: int
     travel_time: int
 
     interview_types: Dict[str, InterviewType]
